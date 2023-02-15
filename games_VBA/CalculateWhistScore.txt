@@ -1,0 +1,43 @@
+Public Function Calculate(gameNumber As Integer, handsMade As Integer, bidNumber As Integer, previousResult) As Integer
+Static stopConditionYes As Integer
+Static stopConditionNo As Integer
+
+If IsNumeric(previousResult) Then
+    If gameNumber <> 1 And stopConditionYes = 4 And handsMade = bidNumber Then
+        Calculate = 10 + bidNumber + 5 + previousResult
+        stopConditionYes = 0
+        stopConditionNo = 0
+    ElseIf gameNumber <> 1 And stopConditionNo = 4 And handsMade <> bidNumber Then
+        Calculate = previousResult - 10 - Abs(handsMade - bidNumber)
+        stopConditionNo = 0
+        stopConditionYes = 0
+    ElseIf gameNumber <> 1 And handsMade = bidNumber Then
+        Calculate = previousResult + bidNumber + 5
+        stopConditionYes = stopConditionYes + 1
+        stopConditionNo = 0
+    ElseIf gameNumber <> 1 And handsMade <> bidNumber Then
+        Calculate = previousResult - Abs(handsMade - bidNumber)
+        stopConditionNo = stopConditionNo + 1
+        stopConditionYes = 0
+    Else:
+        If handsMade = bidNumber Then
+            Calculate = previousResult + bidNumber + 5
+            
+        Else:
+            Calculate = previousResult - Abs(handsMade - bidNumber)
+        End If
+    End If
+Else:
+    'just for first cell
+    If handsMade = bidNumber Then
+        Calculate = bidNumber + 5
+    Else:
+        Calculate = -1
+    End If
+End If
+
+
+
+End Function
+
+

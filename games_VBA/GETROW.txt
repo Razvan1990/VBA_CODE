@@ -1,0 +1,41 @@
+Public Function GETROW(max As Integer) As Integer
+Dim idx As Integer
+Dim columnNumber As Integer
+Dim concatenatedRowColumns As Integer
+'check in range1
+' we will check for max in all ranges of table
+' we know that all ranges are from row 6 to row 13 and columns are from d to i
+If max <> 0 Then
+    For columnNumber = 4 To 9
+    For idx = 6 To 13
+        If Cells(idx, columnNumber).Value = max And columnNumber = 4 Then ' columnD
+            concatenatedRange = "D" & 6 & ":" & "D" & 13
+            GETROW = WorksheetFunction.Match(max, Range(concatenatedRange), 0)
+            Exit Function
+        ElseIf Cells(idx, columnNumber).Value = max And columnNumber = 5 Then ' columnE
+            concatenatedRange = "E" & 6 & ":" & "E" & 13
+            GETROW = WorksheetFunction.Match(max, Range(concatenatedRange), 0)
+            Exit Function
+         ElseIf Cells(idx, columnNumber).Value = max And columnNumber = 6 Then ' columnF
+            concatenatedRange = "F" & 6 & ":" & "F" & 13
+            GETROW = WorksheetFunction.Match(max, Range(concatenatedRange), 0)
+            Exit Function
+        ElseIf Cells(idx, columnNumber).Value = max And columnNumber = 7 Then ' columnG
+            concatenatedRange = "G" & 6 & ":" & "G" & 13
+            GETROW = WorksheetFunction.Match(max, Range(concatenatedRange), 0)
+            Exit Function
+         ElseIf Cells(idx, columnNumber).Value = max And columnNumber = 8 Then ' columnG
+            concatenatedRange = "H" & 6 & ":" & "H" & 13
+            GETROW = WorksheetFunction.Match(max, Range(concatenatedRange), 0)
+            Exit Function
+         ElseIf Cells(idx, columnNumber).Value = max And columnNumber = 9 Then ' columnI
+            concatenatedRange = "I" & 6 & ":" & "I" & 13
+            GETROW = WorksheetFunction.Match(max, Range(concatenatedRange), 0)
+            Exit Function
+    End If
+    Next idx
+    Next columnNumber
+Else:
+    Range("B2").Value = 0
+End If
+End Function

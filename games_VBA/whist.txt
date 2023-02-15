@@ -1,0 +1,269 @@
+Sub whistGenerator()
+Dim x As Integer
+Dim idxInner As Integer
+Dim rowValue As Integer
+Dim rowNumber1 As String
+Dim rowNumber1Int As Integer
+Dim rowNumber2 As String
+Dim colNumber1 As String
+Dim colNumber1Int As Integer
+Dim colNumber2 As String
+Dim colTemp As String
+Dim idxOffset As Integer
+Dim idxRowNumberInt As Integer
+Dim ColumnD As String
+Dim startingValue As Integer
+Dim concatenatedRowNumber As String
+Dim concatenatedColumnNumber As String
+Dim concatenatedColumnTemp As String
+
+
+startingValue = 0 ' this is for the starting score
+x = InputBox("How many players are playing?", "Whist players", "It has to be 4/5/6 players")
+Do While x <> 4 And x <> 5 And x <> 6
+    MsgBox ("Not correct number of players")
+    x = InputBox("How many players are playing?", "Whist players", "It has to be 4/5/6 players")
+    Loop
+Call GenerateYesNo
+rowValue = Selection.row
+'for for 1 games
+For idx = 1 To x
+    Cells(rowValue, 2) = 1
+    rowValue = rowValue + 1
+    Cells(rowValue, 2).Select
+Next idx
+'for from 2 to 7
+For idx = 2 To 7
+    Cells(rowValue, 2) = idx
+    rowValue = rowValue + 1
+    Cells(rowValue, 2).Select
+Next idx
+'for for 8 games
+For idx = 1 To x
+    Cells(rowValue, 2) = 8
+    rowValue = rowValue + 1
+    Cells(rowValue, 2).Select
+Next idx
+'for from 7 to 2
+For idx = 7 To 2 Step -1
+    Cells(rowValue, 2) = idx
+    rowValue = rowValue + 1
+    Cells(rowValue, 2).Select
+Next idx
+'for for 1 games
+For idx = 1 To x
+    Cells(rowValue, 2) = 1
+    Cells(rowValue, 2).Select
+    rowValue = rowValue + 1
+    'not use here last part cause we want to select range and style it
+Next idx
+'select the range
+rowNumber1 = Selection.Address
+rowNumber1Int = Selection.row
+rowValue = Cells(rowNumber1Int, 2).End(xlUp).row ' cause b5 is nothing completed
+rowNumber2 = Cells(rowValue, 2).Address
+concatenatedRowNumber = rowNumber1 & ":" & rowNumber2
+Range(concatenatedRowNumber).Select
+Call formatNumberGames
+
+'create sub-headers for players
+Range("C5").Select
+' we will use a for into create our subheaders
+For idx = 1 To x
+    If idx = x Then ' using this we can easily get the last column
+        Selection.Value = "Bid"
+        Call formatHeadersSmall
+        Selection.Offset(0, 1).Select
+        Selection.Value = "Done?"
+        Call formatHeadersSmall
+        Selection.Offset(0, 1).Select
+        Selection.Value = "SCORE"
+        Call formatHeadersSmall
+    Else:
+        Selection.Value = "Bid"
+        Call formatHeadersSmall
+        Selection.Offset(0, 1).Select
+        Selection.Value = "Done"
+        Call formatHeadersSmall
+        Selection.Offset(0, 1).Select
+        Selection.Value = "SCORE"
+        Call formatHeadersSmall
+        Selection.Offset(0, 1).Select
+    End If
+Next idx
+
+'Create table for playing
+
+'need to take the last row and last column - rowNumber1 is already know, need just column
+'we need to offset this by 1 column for row and 1 row for the column
+Selection.Offset(1, 0).Select
+columnNumber1 = Selection.Address
+Cells(rowNumber1Int, 2).Offset(0, 1).Select
+rowNumber1 = Selection.Address
+concatenatedColumnNumber = rowNumber1 & ":" & columnNumber1
+Range(concatenatedColumnNumber).Select
+Call formatInteriorTable
+
+'Make names for players and merge cells
+Range("C4").Select
+idxOffset = 1
+For idx = 1 To x
+    'create our range
+    colNumber1 = Selection.Address
+    Selection.Offset(0, 2).Select
+    colNumber2 = Selection.Address
+    concatenatedColumnNumber = colNumber1 & ":" & colNumber2
+    Range(concatenatedColumnNumber).Merge False
+    Range(concatenatedColumnNumber).Select
+    Selection.Value = "Player" & idx
+    Call formatHeadersBig
+    Selection.Offset(1, 0).Select
+    Selection.Offset(0, 2).Select
+    colTemp = Selection.Address
+    concatenatedColumnTemp = colTemp & ":" & rowNumber1
+    Range(concatenatedColumnTemp).Select
+    Call outlinePlayerColumn
+    Range("C4").Select
+   'we use an interior for to offset all along cause it is not offseting correctly with merge
+    For idxInner = 1 To idxOffset
+        Selection.Offset(0, 1).Select
+    Next idxInner
+    idxOffset = idxOffset + 1
+Next idx
+
+
+
+Columns.EntireColumn.AutoFit
+
+Call InsertButton
+
+End Sub
+Sub InsertButton()
+'
+' InsertButton Macro
+'
+
+'
+    ActiveSheet.Buttons.Add(865.5, 71.25, 117.75, 45).Select
+    Selection.OnAction = "PERSONAL.XLSB!CalcFunction"
+    Selection.Characters.Text = "Calculate"
+    With Selection.Characters(Start:=1, Length:=9).Font
+        .Name = "Calibri"
+        .FontStyle = "Regular"
+        .Size = 11
+        .Strikethrough = False
+        .Superscript = False
+        .Subscript = False
+        .OutlineFont = False
+        .Shadow = False
+        .Underline = xlUnderlineStyleNone
+        .ColorIndex = 1
+    End With
+    ActiveCell.Select
+End Sub
+
+
+
+
+
+
+
+
+Sub GenerateYesNo()
+Range("b4:b5").Merge False
+Range("B4").Value = "GameNr"
+Range("B4").Select
+Call formatHeadersBig
+Range("B6").Select
+End Sub
+
+Sub formatNumberGames()
+With Selection.Font
+    .Name = "Arial"
+    .Size = 12
+    .Bold = True
+End With
+Selection.Interior.Color = vbRed
+Selection.HorizontalAlignment = xlCenter
+Selection.Borders(xlEdgeTop).LineStyle = xlContinous
+Selection.Borders(xlEdgeBottom).LineStyle = xlContinous
+Selection.Borders(xlEdgeRight).LineStyle = xlContinous
+Selection.Borders(xlEdgeLeft).LineStyle = xlContinous
+Selection.Borders(xlEdgeTop).Weight = xlThick
+Selection.Borders(xlEdgeBottom).Weight = xlThick
+Selection.Borders(xlEdgeRight).Weight = xlThick
+Selection.Borders(xlEdgeLeft).Weight = xlThick
+Selection.Borders(xlInsideHorizontal).LineStyle = xlDot
+Selection.Borders(xlInsideHorizontal).Weight = xlThin
+End Sub
+
+Sub formatHeadersBig()
+With Selection.Font
+    .Name = "Arial"
+    .Size = 16
+    .Bold = True
+    .Italic = True
+End With
+Selection.HorizontalAlignment = xlCenter
+Selection.Interior.ThemeColor = xlThemeColorAccent3
+Selection.Borders(xlEdgeTop).LineStyle = xlContinous
+Selection.Borders(xlEdgeBottom).LineStyle = xlContinous
+Selection.Borders(xlEdgeRight).LineStyle = xlContinous
+Selection.Borders(xlEdgeLeft).LineStyle = xlContinous
+Selection.Borders(xlEdgeTop).Weight = xlThick
+Selection.Borders(xlEdgeBottom).Weight = xlThick
+Selection.Borders(xlEdgeRight).Weight = xlThick
+Selection.Borders(xlEdgeLeft).Weight = xlThick
+
+End Sub
+
+Sub formatHeadersSmall()
+With Selection.Font
+    .Name = "Arial"
+    .Size = 13
+    .Bold = True
+End With
+
+Selection.HorizontalAlignment = xlCenter
+Selection.Interior.ThemeColor = xlThemeColorAccent1
+Selection.Borders(xlEdgeTop).LineStyle = xlContinous
+Selection.Borders(xlEdgeBottom).LineStyle = xlContinous
+Selection.Borders(xlEdgeRight).LineStyle = xlContinous
+Selection.Borders(xlEdgeLeft).LineStyle = xlContinous
+Selection.Borders(xlEdgeTop).Weight = xlThick
+Selection.Borders(xlEdgeBottom).Weight = xlThick
+Selection.Borders(xlEdgeRight).Weight = xlThick
+Selection.Borders(xlEdgeLeft).Weight = xlThick
+End Sub
+
+Sub formatInteriorTable()
+With Selection.Font
+    .Name = "Arial"
+    .Size = 12
+    .Bold = True
+End With
+Selection.HorizontalAlignment = xlCenter
+Selection.Interior.Color = RGB(204, 255, 229)
+Selection.Borders(xlEdgeRight).Weight = xlThick
+Selection.Borders(xlEdgeRight).LineStyle = xlContinous
+Selection.Borders(xlInsideVertical).LineStyle = xlDot
+Selection.Borders(xlInsideHorizontal).LineStyle = xlDot
+Selection.Borders(xlInsideHorizontal).Weight = xlThin
+Selection.Borders(xlEdgeRight).LineStyle = xlContinous
+Selection.Borders(xlEdgeBottom).LineStyle = xlContinous
+Selection.Borders(xlEdgeBottom).Weight = xlThick
+Selection.Borders(xlEdgeRight).Weight = xlThick
+End Sub
+
+Sub outlinePlayerColumn()
+Selection.Borders(xlEdgeRight).LineStyle = xlContinous
+Selection.Borders(xlEdgeRight).Weight = xlThick
+End Sub
+
+
+
+
+
+
+
+

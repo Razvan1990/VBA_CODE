@@ -1,0 +1,687 @@
+Sub createRentzGame()
+
+Dim nrPlayers As Integer
+Dim idx As Integer
+Dim addressStart As String
+Dim addressEndGames As String
+Dim adressStartPlayer As String
+Dim addressEndPlayers As String
+Dim addressEndPlayersOffset As String
+Dim concatenatedRangePlayers As String
+Dim concatenatedRangePlayers_Game As String
+Dim addressGameOne As String
+Dim addressLastGame As String
+Dim addressTableFirst As String
+Dim addressTableLast As String
+Dim concatenatedTableRange As String
+Dim rowGameOne As Integer
+Dim counter As Integer
+Dim idxInner As Integer
+Dim colStart As Integer
+Dim A1Value As String
+'Dim sheetName As String
+'range
+Dim xRange As Range
+Dim testRange As Range
+Dim ws As Worksheet
+
+
+sheetName = ActiveSheet.Name
+
+Set wksSource = ActiveWorkbook.sheets(sheetName)
+
+nrPlayers = InputBox("How many players?", "Players", "Select 4/5/6 players")
+Do While nrPlayers <> 4 And nrPlayers <> 5 And nrPlayers <> 6
+    MsgBox ("Not correct number of players")
+    nrPlayers = InputBox("How many players?", "Players", "Select 4/5/6 players")
+    Loop
+
+ActiveWindow.DisplayGridlines = False
+Call createStartingPoint
+addressStart = Selection.Address
+Call createGames
+colStart = Selection.Column
+For idx = 1 To nrPlayers
+    If idx = 1 Then
+        Cells(5, colStart + idx).Value = "Player" & idx
+        addressStartPlayer = Cells(5, colStart + idx).Address
+    ElseIf idx = nrPlayers Then
+        Cells(5, colStart + idx).Value = "Player" & idx
+        addressEndPlayers = Cells(5, colStart + idx).Address
+    Else:
+        Cells(5, colStart + idx).Value = "Player" & idx
+    End If
+Next idx
+concatenatedRangePlayers = addressStart & ":" & addressEndPlayers
+Range(concatenatedRangePlayers).Select
+Call formatHeadersBig
+'go back to c5'
+Range("c5").Select
+addressEndGames = Selection.End(xlDown).Offset(0, 1).Address
+addressEndPlayersOffset = Range(addressEndPlayers).Offset(1, 0).Address
+concatenatedRangePlayers_Game = addressEndGames & ":" & addressEndPlayersOffset
+Range(concatenatedRangePlayers_Game).Select
+Call formatInnerTable
+
+'create table scores and number games
+Range(addressEndGames).Offset(0, -1).Select ' gone back to last game
+Selection.Offset(1, 0).Select
+addressGameOne = Selection.Address
+gameRowOne = Selection.row
+counter = 0
+For idx = 1 To nrPlayers
+    For idxInner = 1 To 8 'there are 8 games
+        If idx = nrPlayers And idxInner = 8 Then
+            Cells(gameRowOne + counter, 3).Select
+            Selection.Value = counter + 1
+            Call formatNumberGames
+            addressLastGame = Selection.Address
+        End If
+        Cells(gameRowOne + counter, 3).Select
+        Selection.Value = counter + 1
+        Call formatNumberGames
+        counter = counter + 1
+    Next idxInner
+Next idx
+'go back to game one
+addressTableFirst = Range(addressGameOne).Offset(0, 1).Address
+addressTableLast = Range(addressLastGame).Offset(0, nrPlayers).Address ' it will offset exactly nrPlayers
+concatenatedTableRange = addressTableFirst & ":" & addressTableLast
+Range(concatenatedTableRange).Select
+Call formatScoreTable
+Columns("C:I").AutoFit
+
+
+'Call DropDownList
+Range("k14:l14").Merge False
+Range("K14").Select
+Selection.Value = "Played Game"
+Call FormatPlayedGame
+
+Range("k15:l16").Merge False
+Call DropDownList
+
+'Inserting Elements for formula
+Range("A5").Value = 1
+Range("A6").Value = 2
+Range("A7").Value = 3
+Range("A8").Value = 4
+Range("A9").Value = 5
+Range("A10").Value = 6
+
+Range("B5").Value = "D"
+Range("B6").Value = "E"
+Range("B7").Value = "F"
+Range("B8").Value = "G"
+Range("B9").Value = "H"
+Range("B10").Value = "I"
+
+Range("a5:b10").Font.Size = 2
+Range("A5:B10").Font.Color = RGB(255, 255, 255)
+Range("C3").Font.Color = RGB(255, 255, 255)
+
+Range("d1").Value = 1
+Range("e1").Value = 2
+Range("f1").Value = 3
+Range("g1").Value = 4
+Range("h1").Value = 5
+Range("i1").Value = 6
+Range("j1").Value = 7
+Range("k1").Value = 8
+
+Range("d2").Value = 6
+Range("e2").Value = 7
+Range("f2").Value = 8
+Range("g2").Value = 9
+Range("h2").Value = 10
+Range("i2").Value = 11
+Range("j2").Value = 12
+Range("k2").Value = 13
+
+Range("d1:k2").Font.Size = 1
+Range("a2:B3").Font.Size = 1
+Range("D1:K2").Font.Color = RGB(255, 255, 255)
+Range("A2:B3").Font.Color = RGB(255, 255, 255)
+
+'Creating Result Tab
+
+Range("N14").Value = "RESULT"
+Range("n15:n16").Merge False
+Range("n14:n15").Select
+Call formatResultCell
+
+Call CreateFormulaBig
+Range("k15").AddComment "0 is nothing selected"
+Range("A1").AddComment "When selecting a game please select like this:1,2,3..."
+
+Range("C2").Select
+Call DropDownListPlayers
+Selection.Offset(-1, 0).Select
+With Selection
+    .Value = "PLAYERS"
+    .HorizontalAlignment = xlCenter
+    .Interior.ThemeColor = xlThemeColorAccent3
+    .Font.Size = 12
+    .Font.Name = "Consolas"
+End With
+
+
+Call InsertButtons
+Columns("L:N").AutoFit
+
+
+
+
+
+
+End Sub
+
+Sub CalculateTotalScore()
+Static idxRow As Integer: '
+Dim cellAddressLast As String
+Dim rowString As String
+Dim rowIndex As Integer
+
+
+
+    If Range("c2").Value = Range("D5").Value Then 'Player1
+        Range("D61").Select 'ending range
+        Range(Selection, Selection.End(xlUp)).Select 'ctrl+shift+up
+        If Selection.Rows.Count > 47 Then
+            Range("C3").Value = 0
+            Range("D14") = 0 - Range("N15")
+        Else:
+            rowIndex = 61 - Selection.Rows.Count + 1
+            Range("C3").Value = Cells(rowIndex, 4).Value
+            Cells(rowIndex + 1, 4) = Range("C3").Value - Range("n15").Value
+        End If
+    ElseIf Range("c2").Value = Range("e5").Value Then 'Player2
+        Range("E61").Select 'ending range
+        Range(Selection, Selection.End(xlUp)).Select
+        If Selection.Rows.Count > 47 Then
+            Range("C3").Value = 0
+            Range("E14") = 0 - Range("N15")
+        Else:
+            rowIndex = 61 - Selection.Rows.Count + 1
+            Range("C3").Value = Cells(rowIndex, 5).Value
+            Cells(rowIndex + 1, 5) = Range("C3").Value - Range("n15").Value
+        End If
+    ElseIf Range("c2").Value = Range("f5").Value Then 'Player3
+        Range("F61").Select 'ending range
+        Range(Selection, Selection.End(xlUp)).Select
+        If Selection.Rows.Count > 47 Then
+            Range("C3").Value = 0
+            Range("F14") = 0 - Range("N15")
+        Else:
+            rowIndex = 61 - Selection.Rows.Count + 1
+            Range("C3").Value = Cells(rowIndex, 6).Value
+            Cells(rowIndex + 1, 6) = Range("C3").Value - Range("n15").Value
+        End If
+    ElseIf Range("c2").Value = Range("g5").Value Then 'Player4
+        Range("g61").Select 'ending range
+        Range(Selection, Selection.End(xlUp)).Select
+        If Selection.Rows.Count > 47 Then
+            Range("C3").Value = 0
+            Range("g14") = 0 - Range("N15")
+        Else:
+            rowIndex = 61 - Selection.Rows.Count + 1
+            Range("C3").Value = Cells(rowIndex, 7).Value
+            Cells(rowIndex + 1, 7) = Range("C3").Value - Range("n15").Value
+        End If
+    ElseIf Range("c2").Value = Range("h5").Value Then 'Player5
+        Range("h61").Select 'ending range
+        Range(Selection, Selection.End(xlUp)).Select
+        If Selection.Rows.Count > 47 Then
+            Range("C3").Value = 0
+            Range("h14") = 0 - Range("N15")
+        Else:
+            rowIndex = 61 - Selection.Rows.Count + 1
+            Range("C3").Value = Cells(rowIndex, 8).Value
+            Cells(rowIndex + 1, 8) = Range("C3").Value - Range("n15").Value
+        End If
+    ElseIf Range("c2").Value = Range("i5").Value Then 'Player6
+        Range("i61").Select 'ending range
+        Range(Selection, Selection.End(xlUp)).Select
+        If Selection.Rows.Count > 47 Then
+            Range("C3").Value = 0
+            Range("i14") = 0 - Range("N15")
+        Else:
+            rowIndex = 61 - Selection.Rows.Count + 1
+            Range("C3").Value = Cells(rowIndex, 9).Value
+            Cells(rowIndex + 1, 9) = Range("C3").Value - Range("n15").Value
+        End If
+    End If
+End Sub
+Sub gameCalculation()
+Dim responseKing As Integer
+Dim responseQueen As Integer
+Dim nrQueens As Integer
+Dim responseDiamonds As Integer
+Dim nrDiamonds As Integer
+Dim responseLevate As Integer
+Dim nrLevate As Integer
+Dim totalCount As Integer
+Dim responseWhist As Integer
+Dim nrWhist As Integer
+Dim responseTen As Integer
+Dim placeRentz As Integer
+
+
+If Range("k15").Value = "King of Hearts" Then
+    responseKing = MsgBox("Have you got the king of hearts?", vbYesNo, "KING OF HEARTS")
+    If responseKing = vbYes Then
+        'add with plus minuses games to make formula correct
+        Range("N15").Value = 200
+    End If
+ElseIf Range("k15").Value = "Queens" Then
+    responseQueen = MsgBox("Have you got queens?", vbYesNo, "Queens")
+    If responseQueen = vbYes Then
+        nrQueens = InputBox("How many queens have you got?", "QUEENS", "1/2/3/4")
+        Range("N15").Value = nrQueens * 50
+    End If
+ElseIf Range("k15").Value = "Diamonds" Then
+    responseDiamonds = MsgBox("Have you got diamonds?", vbYesNo, "Diamonds")
+    If responseDiamonds = vbYes Then
+        nrDiamonds = InputBox("How many diamonds have you got?", "DIAMONDS", "1,2,3...8")
+        Range("N15").Value = nrDiamonds * 25
+    End If
+ElseIf Range("k15").Value = "Levate" Then
+    responseLevate = MsgBox("Have you got hands?", vbYesNo, "Levate")
+    If responseLevate = vbYes Then
+        nrLevate = InputBox("How many hands have you got?", "LEVATE", "1,2,3...8")
+        Range("N15").Value = nrLevate * 20
+    End If
+ElseIf Range("k15").Value = "Totals" Then
+'need to accumulate all
+    totalCount = 0
+    responseLevate = MsgBox("Have you got hands?", vbYesNo, "Levate")
+    If responseLevate = vbYes Then
+        responseKing = MsgBox("Have you got the king of hearts?", vbYesNo, "King Hearts")
+        If responseKing = vbYes Then
+            'add with plus minuses games to make formula correct
+            totalCount = totalCount + 200
+        End If
+        responseQueen = MsgBox("Have you got queens?", vbYesNo, "Queens")
+        If responseQueen = vbYes Then
+            nrQueens = InputBox("How many queens have you got?", "QUEENS", "1/2/3/4")
+            totalCount = totalCount + (nrQueens * 50)
+        End If
+        responseDiamonds = MsgBox("Have you got diamonds?", vbYesNo, "Diamonds")
+        If responseDiamonds = vbYes Then
+            nrDiamonds = InputBox("How many diamonds have you got?", "DIAMONDS", "1,2,3...8")
+            totalCount = totalCount + (nrDiamonds * 25)
+        End If
+        nrLevate = InputBox("How many hands in total?", "Hands", "1,2,3...8")
+        totalCount = totalCount + (nrLevate * 20)
+        Range("n15").Value = totalCount
+    End If
+ElseIf Range("k15").Value = "Whist" Then
+    responseWhist = MsgBox("Have you got hands?", vbYesNo, "Whist")
+    If responseWhist = vbYes Then
+        nrWhist = InputBox("How many hands have you got?", "WHIST", "1,2,3...8")
+        Range("N15").Value = -nrWhist * 20
+    End If
+ElseIf Range("k15").Value = "Clubs 10" Then
+    responseTen = MsgBox("Have you got the 10 of clubs?", vbYesNo, "10 clubs")
+    If responseTen = vbYes Then
+        'add with plus minuses games to make formula correct
+        Range("N15").Value = -200
+    End If
+ElseIf Range("K15").Value = "Rentz" Then
+    placeRentz = InputBox("What is your place?", "RENTZ", "1,2...6")
+    If placeRentz = 1 Then
+        Range("N15").Value = -400
+    ElseIf placeRentz = 2 Then
+        Range("n15").Value = -250
+    ElseIf placeRentz = 3 Then
+        Range("n15").Value = -150
+    ElseIf placeRentz = 4 Then
+        Range("n15").Value = -100
+    ElseIf placeRentz = 5 Then
+        Range("n15").Value = -50
+    ElseIf placeRentz = 6 Then
+        Range("n15").Value = -25
+    End If
+End If
+End Sub
+
+
+        
+        
+
+
+    
+        
+        
+
+
+Sub createStartingPoint()
+Range("c5").Value = "Game/Name"
+Range("C5").Select
+Call formatMiddle
+Range("c5").Select
+
+
+
+    
+
+
+
+End Sub
+
+Sub formatHeadersBig()
+With Selection.Font
+    .Name = "Consolas"
+    .Size = 14
+    .Bold = True
+    .Italic = True
+End With
+Selection.HorizontalAlignment = xlCenter
+Selection.Interior.ThemeColor = xlThemeColorAccent3
+Selection.Borders(xlEdgeTop).LineStyle = xlContinous
+Selection.Borders(xlEdgeBottom).LineStyle = xlContinous
+Selection.Borders(xlEdgeRight).LineStyle = xlContinous
+Selection.Borders(xlEdgeLeft).LineStyle = xlContinous
+Selection.Borders(xlEdgeTop).Weight = xlThick
+Selection.Borders(xlEdgeBottom).Weight = xlThick
+Selection.Borders(xlEdgeRight).Weight = xlThick
+Selection.Borders(xlEdgeLeft).Weight = xlThick
+Selection.Borders(xlInsideHorizontal).LineStyle = xlContinous
+Selection.Borders(xlInsideHorizontal).Weight = xlThick
+Selection.Borders(xlInsideVertical).LineStyle = xlContinous
+Selection.Borders(xlInsideVertical).Weight = xlThick
+
+End Sub
+
+Sub createGames()
+Dim nrGames As Integer
+Dim startingPointGame As Integer
+Dim startingAdd As String
+Dim endingAdd As String
+Dim concatenatedAdd As String
+Selection.Offset(1, 0).Select
+startingPointGame = 6 ' we know game will stat from 6th row
+Cells(startingPointGame, 3).Value = "King of Hearts"
+Cells(startingPointGame + 1, 3).Value = "Queens"
+Cells(startingPointGame + 2, 3).Value = "Diamonds"
+Cells(startingPointGame + 3, 3).Value = "Levate"
+Cells(startingPointGame + 4, 3).Value = "Totals"
+Cells(startingPointGame + 5, 3).Value = "Whist"
+Cells(startingPointGame + 6, 3).Value = "Clubs 10"
+Cells(startingPointGame + 7, 3).Value = "Rentz"
+startingAdd = Selection.Address
+endingAdd = Selection.End(xlDown).Address
+concatenatedAddress = startingAdd & ":" & endingAdd
+Range(concatenatedAddress).Select
+Call formatHeadersBig
+Range("C5").Select
+
+
+End Sub
+
+Sub formatMiddle()
+With Selection.Font
+    .Name = "Consolas"
+    .Size = 14
+    .Bold = True
+    .Italic = True
+End With
+Selection.HorizontalAlignment = xlCenter
+Selection.Interior.ThemeColor = xlThemeColorAccent4
+Selection.Borders(xlEdgeTop).LineStyle = xlContinous
+Selection.Borders(xlEdgeBottom).LineStyle = xlContinous
+Selection.Borders(xlEdgeRight).LineStyle = xlContinous
+Selection.Borders(xlEdgeLeft).LineStyle = xlContinous
+Selection.Borders(xlEdgeTop).Weight = xlThick
+Selection.Borders(xlEdgeBottom).Weight = xlThick
+Selection.Borders(xlEdgeRight).Weight = xlThick
+Selection.Borders(xlEdgeLeft).Weight = xlThick
+Selection.Borders(xlInsideHorizontal).LineStyle = xlContinous
+Selection.Borders(xlInsideHorizontal).Weight = xlThick
+End Sub
+
+Sub formatInnerTable()
+With Selection.Font
+    .Name = "Consolas"
+    .Size = 12
+    .Bold = True
+End With
+Selection.HorizontalAlignment = xlCenter
+Selection.Interior.Color = RGB(113, 123, 212)
+Selection.Borders(xlEdgeTop).LineStyle = xlContinous
+Selection.Borders(xlEdgeBottom).LineStyle = xlContinous
+Selection.Borders(xlEdgeRight).LineStyle = xlContinous
+Selection.Borders(xlEdgeLeft).LineStyle = xlContinous
+Selection.Borders(xlEdgeTop).Weight = xlThick
+Selection.Borders(xlEdgeBottom).Weight = xlThick
+Selection.Borders(xlEdgeRight).Weight = xlThick
+Selection.Borders(xlEdgeLeft).Weight = xlThick
+Selection.Borders(xlInsideVertical).LineStyle = xlContinous
+Selection.Borders(xlInsideVertical).Weight = xlThick
+Selection.Borders(xlInsideHorizontal).LineStyle = xlContinous
+Selection.Borders(xlInsideHorizontal).Weight = xlThin
+
+
+
+
+    
+End Sub
+
+Sub formatNumberGames()
+With Selection.Font
+    .Name = "Consolas"
+    .Size = 12
+    .Bold = True
+End With
+Selection.HorizontalAlignment = xlCenter
+Selection.Borders(xlEdgeTop).LineStyle = xlContinous
+Selection.Borders(xlEdgeBottom).LineStyle = xlContinous
+Selection.Borders(xlEdgeRight).LineStyle = xlContinous
+Selection.Borders(xlEdgeLeft).LineStyle = xlContinous
+Selection.Borders(xlEdgeTop).Weight = xlThick
+Selection.Borders(xlEdgeBottom).Weight = xlThick
+Selection.Borders(xlEdgeRight).Weight = xlThick
+Selection.Borders(xlEdgeLeft).Weight = xlThick
+Selection.Borders(xlInsideVertical).LineStyle = xlContinous
+Selection.Borders(xlInsideVertical).Weight = xlThick
+Selection.Borders(xlInsideHorizontal).LineStyle = xlContinous
+Selection.Borders(xlInsideHorizontal).Weight = xlThick
+Selection.Interior.Color = RGB(204, 255, 229)
+End Sub
+
+Sub formatScoreTable()
+With Selection.Font
+    .Name = "Consolas"
+    .Size = 12
+    .Bold = True
+End With
+Selection.HorizontalAlignment = xlCenter
+Selection.Interior.Color = RGB(204, 255, 229)
+Selection.Borders(xlEdgeTop).LineStyle = xlContinous
+Selection.Borders(xlEdgeBottom).LineStyle = xlContinous
+Selection.Borders(xlEdgeRight).LineStyle = xlContinous
+Selection.Borders(xlEdgeLeft).LineStyle = xlContinous
+Selection.Borders(xlEdgeTop).Weight = xlThick
+Selection.Borders(xlEdgeBottom).Weight = xlThick
+Selection.Borders(xlEdgeRight).Weight = xlThick
+Selection.Borders(xlEdgeLeft).Weight = xlThick
+Selection.Borders(xlInsideVertical).LineStyle = xlContinous
+Selection.Borders(xlInsideVertical).Weight = xlThick
+Selection.Borders(xlInsideHorizontal).LineStyle = xlDot
+Selection.Borders(xlInsideHorizontal).Weight = xlThin
+End Sub
+
+Sub DropDownList()
+'
+' DropDownList Macro
+'
+
+Range("K15:L16").Select
+    With Selection.Validation
+        .Delete
+        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Operator:= _
+        xlBetween, Formula1:="=$C$6:$C$13"
+        .IgnoreBlank = True
+        .InCellDropdown = True
+        .InputTitle = ""
+        .ErrorTitle = ""
+        .InputMessage = ""
+        .ErrorMessage = ""
+        .ShowInput = True
+        .ShowError = False
+    End With
+
+    Selection.Interior.Color = vbBlue
+    Selection.Font.Size = 14
+    Selection.Font.Color = RGB(255, 0, 255)
+    Selection.HorizontalAlignment = xlCenter
+End Sub
+
+Sub FormatPlayedGame()
+With Selection.Font
+    .Name = "Consolas"
+    .Size = 14
+End With
+Selection.Interior.ThemeColor = xlThemeColorLight2
+Selection.HorizontalAlignment = xlCenter
+
+
+End Sub
+
+Sub formatResultCell()
+With Selection.Font
+    .Name = "Consolas"
+    .Size = 12
+    .Bold = True
+End With
+Selection.Interior.Color = RGB(204, 102, 0)
+Selection.Borders(xlEdgeTop).LineStyle = xlContinous
+Selection.Borders(xlEdgeBottom).LineStyle = xlContinous
+Selection.Borders(xlEdgeRight).LineStyle = xlContinous
+Selection.Borders(xlEdgeLeft).LineStyle = xlContinous
+Selection.Borders(xlEdgeTop).Weight = xlThick
+Selection.Borders(xlEdgeBottom).Weight = xlThick
+Selection.Borders(xlEdgeRight).Weight = xlThick
+Selection.Borders(xlEdgeLeft).Weight = xlThick
+Selection.Borders(xlInsideHorizontal).LineStyle = xlContinous
+Selection.Borders(xlInsideHorizontal).Weight = xlThick
+Selection.HorizontalAlignment = xlCenter
+
+    
+End Sub
+
+
+
+Sub DropDownListGames()
+'
+' DropDownList Macro
+'
+
+'
+    Range("K15:L16").Select
+    With Selection.Validation
+        .Delete
+        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Operator:= _
+        xlBetween, Formula1:="=$C$6:$C$13"
+        .IgnoreBlank = True
+        .InCellDropdown = True
+        .InputTitle = ""
+        .ErrorTitle = ""
+        .InputMessage = ""
+        .ErrorMessage = ""
+        .ShowInput = True
+        .ShowError = False
+    End With
+End Sub
+Sub CreateFormulaBig()
+'
+' CreateFormulaBig Macro
+'
+
+'
+    Range("A2").Select
+    'ActiveCell.FormulaR1C1 = "= Maxim()"
+    ActiveCell.FormulaR1C1 = "= Max(R6C4:R13C9)"
+    Range("B2").Select
+    ActiveCell.FormulaR1C1 = "= GETROW(RC[-1])"
+    Range("B3").Select
+    ActiveCell.FormulaR1C1 = "= HLOOKUP(R[-1]C,R[-2]C[2]:R[-1]C[9],2,0)"
+    Range("A3").Select
+    ActiveCell.FormulaR1C1 = _
+        "= VLOOKUP(MATCH(R[-1]C,INDIRECT(CONCATENATE(""D"",RC[1],"":"",""I"",RC[1])),0),R[2]C:R[7]C[1],2,0)"
+    Range("K15:L16").Select
+    ActiveCell.FormulaR1C1 = _
+        "= IF(ISERROR(INDEX(R[-9]C[-8]:R[-2]C[-3],MATCH(R[-13]C[-10],INDIRECT(CONCATENATE(R[-12]C[-10],6,"":"",R[-12]C[-10],13)),0),1)),"""",INDEX(R[-9]C[-8]:R[-2]C[-3],MATCH(R[-13]C[-10],INDIRECT(CONCATENATE(R[-12]C[-10],6,"":"",R[-12]C[-10],13)),0),1))"
+    Range("K15:L16").Select
+    ActiveCell.FormulaR1C1 = _
+        "= IF(ISERROR(INDEX(R[-9]C[-8]:R[-2]C[-2],MATCH(R[-13]C[-10],INDIRECT(CONCATENATE(R[-12]C[-10],6,"":"",R[-12]C[-10],13)),0),1)),"""",INDEX(R[-9]C[-8]:R[-2]C[-2],MATCH(R[-13]C[-10],INDIRECT(CONCATENATE(R[-12]C[-10],6,"":"",R[-12]C[-10],13)),0),1))"
+    Range("K17").Select
+End Sub
+
+
+
+Sub InsertButtons()
+'
+' InsertButtons Macro
+'
+
+'
+    ActiveSheet.Buttons.Add(236.25, 6, 158.25, 36.75).Select
+    Selection.OnAction = "PERSONAL.XLSB!CalculateTotalScore"
+    Selection.Characters.Text = "CalculateScore"
+    With Selection.Characters(Start:=1, Length:=14).Font
+        .Name = "Calibri"
+        .FontStyle = "Bold Italic"
+        .Size = 11
+        .Strikethrough = False
+        .Superscript = False
+        .Subscript = False
+        .OutlineFont = False
+        .Shadow = False
+        .Underline = xlUnderlineStyleNone
+        .ColorIndex = 41
+    End With
+    Range("L11").Select
+    ActiveSheet.Buttons.Add(641.25, 200, 170.25, 40.75).Select
+    Selection.OnAction = "PERSONAL.XLSB!gameCalculation"
+    Selection.Characters.Text = "CalculateGameScore"
+    With Selection.Characters(Start:=1, Length:=18).Font
+        .Name = "Calibri"
+        .FontStyle = "Bold Italic"
+        .Size = 11
+        .Strikethrough = False
+        .Superscript = False
+        .Subscript = False
+        .OutlineFont = False
+        .Shadow = False
+        .Underline = xlUnderlineStyleNone
+        .ColorIndex = 41
+        '.ThemeFont = xlThemeFontMinor
+    End With
+    Range("O12").Select
+End Sub
+
+Sub DropDownListPlayers()
+'
+' DropDownListPlayers Macro
+'
+
+'
+    With Selection.Validation
+        .Delete
+        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Operator:= _
+        xlBetween, Formula1:="=$D$5:$I$5"
+        .IgnoreBlank = True
+        .InCellDropdown = True
+        .InputTitle = ""
+        .ErrorTitle = ""
+        .InputMessage = ""
+        .ErrorMessage = ""
+        .ShowInput = True
+        .ShowError = True
+    End With
+    Selection.Interior.Color = vbBlue
+    Selection.Font.Color = RGB(255, 0, 255)
+    Selection.Font.Name = "Consolas"
+End Sub
+
