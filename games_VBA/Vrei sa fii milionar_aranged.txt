@@ -1,0 +1,884 @@
+Option Explicit
+'make global variables here
+Dim numberQuestionChosen As Integer
+Dim isValuePresent As Boolean
+Dim currentMoneyValue As Long
+Dim nextMoneyValue As Long
+Dim answer As Boolean
+Dim contestantAnswer As String
+Dim listHelpLines As New Collection
+Dim isHelplineUsed As Boolean
+Dim listIndices As New Collection
+
+
+
+
+Sub createVreiSaFiiMilionar()
+Dim numberOfQuestions As Integer
+Dim questionChosen As Integer
+Dim indexWorksheet As Integer
+Dim sheetName As String
+Dim idxCopyAnswer As Integer
+Dim valueWon As Long
+Dim idxRowStartAnswer As Integer: idxRowStartAnswer = 14
+
+
+Dim correctAns As String
+Dim answerPlayer As String
+
+
+ActiveSheet.Name = "Questions"
+Call InsertQuestions
+For indexWorksheet = 1 To 15
+    Worksheets.Add
+    sheetName = "Question" & indexWorksheet
+    ActiveSheet.Name = sheetName
+    'Worksheets("Questions").Visible = xlSheetHidden
+    Call makePageQuestion
+    'go back to worksheet questions
+    Worksheets("Questions").Activate
+    Range("A1").Select
+    Selection.End(xlDown).Select
+    numberOfQuestions = Selection.row
+    If indexWorksheet = 1 Then
+        Call refactorAnswers(numberOfQuestions)
+    End If
+    'refactor answers
+    'choose random number
+    Call chooseRandomQuestion(numberOfQuestions)
+    'check if the question is already done
+    Select Case indexWorksheet
+        Case 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+            Call checkIfValueIsPresentInCollection(numberQuestionChosen, listIndices)
+            Do While isValuePresent = True
+                Call chooseRandomQuestion(numberOfQuestions)
+                Call checkIfValueIsPresentInCollection(numberQuestionChosen, listIndices)
+            Loop
+            listIndices.Add (numberQuestionChosen)
+            Worksheets(sheetName).Move After:=Worksheets(Worksheets.Count)
+            Worksheets("Questions").Activate
+    End Select
+    'get the questions from that value and answers
+    Cells(numberQuestionChosen, 1).Select
+    Selection.Copy
+    Worksheets(sheetName).Activate
+    Range("i9").Select
+    ActiveSheet.Paste
+    ' go back to questions and take the answers
+    Worksheets("Questions").Activate
+    Cells(numberQuestionChosen, 1).Offset(1, 0).Select
+    Selection.Copy
+    Worksheets(sheetName).Activate
+    Range("i" & idxRowStartAnswer).Select
+    ActiveSheet.Paste
+    For idxCopyAnswer = 1 To 4 'first is already copied
+        Worksheets("Questions").Activate
+        Cells(numberQuestionChosen, 1).Offset(1, idxCopyAnswer).Select
+        Selection.Copy
+        Worksheets(sheetName).Activate
+        If idxCopyAnswer = 1 Then
+            Range("o" & idxRowStartAnswer).Select
+            ActiveSheet.Paste
+        ElseIf idxCopyAnswer = 2 Then
+            Range("i" & idxRowStartAnswer + idxCopyAnswer).Select
+            ActiveSheet.Paste
+        ElseIf idxCopyAnswer = 3 Then
+            Range("o" & idxRowStartAnswer + idxCopyAnswer - 1).Select
+            ActiveSheet.Paste
+        Else:
+            Range("A1").Select
+            ActiveSheet.Paste
+            Selection.Font.Color = vbWhite
+            correctAns = Range("A1").value
+        End If
+    Next idxCopyAnswer
+    'we know it is from a to d the answers
+    'put all in place now
+    Range("A2").value = indexWorksheet
+    Range("A2").Font.Color = vbWhite
+    Call defineSums(indexWorksheet)
+    Range("D5").value = currentMoneyValue
+    Range("F5").value = nextMoneyValue
+    If indexWorksheet = 1 Then
+        Worksheets("Questions").Activate
+        Call hideQuestionSheet
+        Worksheets("Questions").Move Before:=Worksheets(sheetName)
+        listIndices.Add (numberQuestionChosen)
+        Range("A1").Select
+    End If
+    Worksheets(sheetName).Activate
+    Call createPlayGame(indexWorksheet, nextMoneyValue, correctAns, currentMoneyValue)
+    If answer = True Then
+        Call colorCorrectAnswer(correctAns)
+        Application.Wait (Now + TimeValue("00:00:03"))
+    Else
+        Call colorAnswersWrong(correctAns, contestantAnswer)
+        Application.Wait (Now + TimeValue("00:00:03"))
+        Set listHelpLines = Nothing
+        Set listIndices = Nothing
+        isHelplineUsed = False
+        Exit Sub
+    End If
+Next indexWorksheet
+Set listHelpLines = Nothing
+Set listIndices = Nothing
+isHelplineUsed = False
+End Sub
+
+Sub InsertQuestions()
+'
+' InsertQuestions Macro
+'
+
+'
+    Range("A1").Select
+    With ActiveSheet.QueryTables.Add(Connection:= _
+        "TEXT;G:\excel\excel_testing\QandA.txt", destination:=Range("$A$1"))
+        .Name = "QandA_1"
+        .FieldNames = True
+        .RowNumbers = False
+        .FillAdjacentFormulas = False
+        .PreserveFormatting = True
+        .RefreshOnFileOpen = False
+        .RefreshStyle = xlInsertDeleteCells
+        .SavePassword = False
+        .SaveData = True
+        .AdjustColumnWidth = True
+        .RefreshPeriod = 0
+        .TextFilePromptOnRefresh = False
+        .TextFilePlatform = 437
+        .TextFileStartRow = 1
+        .TextFileParseType = xlDelimited
+        .TextFileTextQualifier = xlTextQualifierDoubleQuote
+        .TextFileConsecutiveDelimiter = False
+        .TextFileTabDelimiter = True
+        .TextFileSemicolonDelimiter = False
+        .TextFileCommaDelimiter = True
+        .TextFileSpaceDelimiter = False
+        .TextFileColumnDataTypes = Array(1, 1, 1, 1)
+        .TextFileTrailingMinusNumbers = True
+        .Refresh BackgroundQuery:=False
+    End With
+End Sub
+
+Sub chooseRandomQuestion(numberOfQuestions)
+
+
+numberQuestionChosen = WorksheetFunction.RandBetween(1, numberOfQuestions)
+If numberQuestionChosen Mod 2 = 0 Then
+    Call chooseRandomQuestion(numberOfQuestions)
+End If
+
+
+End Sub
+
+Sub hideQuestionSheet()
+Range("A:xfd").Select
+Selection.Interior.Color = vbWhite
+Selection.Font.Color = vbWhite
+End Sub
+
+Sub makePageQuestion()
+Dim idxRow As Integer
+Dim addressOffset As String
+
+ActiveWindow.DisplayGridlines = False
+Range("I1:t8").Select
+Call stylePageQuestionHeader
+Range("i9:t13").Select
+Call stylePageQuestionMiddle
+For idxRow = 14 To 17 Step 2
+    Range("i" & idxRow & ":" & "n" & idxRow + 1).Select
+    Call stylePageQuestionLast
+    Selection.Offset(0, 1).Select
+    addressOffset = Selection.Address
+    Range(addressOffset & ":" & "t" & idxRow + 1).Select
+    Call stylePageQuestionLast
+Next idxRow
+Range("D3:e4").Select
+Call stylePriceQuestions
+Selection.value = "Suma castigata"
+Range("f3:g4").Select
+Call stylePriceQuestions
+Selection.value = "Intrebare pentru"
+'go down
+Range("D5:e5").Select
+Call styleMoney
+Range("F5:g5").Select
+Call styleMoney
+Range("A1").Select
+Selection.Font.Color = vbWhite
+Range("P18:R18").Select
+Selection.Merge False
+Selection.value = "RASPUNS FINAL"
+Call styleFinalAnswer
+Range("S18:T18").Select
+Selection.Merge False
+Call styleFinalAnswer
+
+
+
+
+
+
+
+
+
+
+
+End Sub
+
+Sub stylePageQuestionHeader()
+Selection.Merge False
+With Selection.Font
+    .Name = "CooperBlack"
+    .Size = 24
+    .Color = RGB(204, 218, 83)
+End With
+Selection.HorizontalAlignment = xlCenter
+Selection.Interior.Color = RGB(61, 115, 223)
+Selection.value = "VREI SA FII MILIONAR"
+Selection.WrapText = True
+End Sub
+
+Sub stylePageQuestionMiddle()
+Selection.Merge False
+With Selection.Font
+    .Name = "Arial Black"
+    .Size = 14
+End With
+Selection.WrapText = True
+Selection.HorizontalAlignment = xlCenter
+Selection.Interior.Color = RGB(147, 183, 106)
+End Sub
+
+
+Sub stylePageQuestionLast()
+Selection.Merge False
+With Selection.Font
+    .Name = "Lucida Console"
+    .Size = 12
+End With
+Selection.WrapText = True
+Selection.HorizontalAlignment = xlCenter
+Selection.Interior.Color = RGB(192, 192, 192)
+Selection.Borders(xlEdgeTop).Weight = xlThick
+Selection.Borders(xlEdgeBottom).Weight = xlThick
+Selection.Borders(xlEdgeRight).Weight = xlThick
+Selection.Borders(xlEdgeLeft).Weight = xlThick
+
+End Sub
+
+Public Sub refactorAnswers(rowNumber As Integer)
+Dim idx As Integer
+Dim idxColumn As Integer
+Dim tempValue As Variant
+For idxColumn = 1 To 4
+    Select Case idxColumn
+        Case 1:
+            For idx = 1 To rowNumber
+            If idx Mod 2 = 0 Then
+                tempValue = Range("A" & idx).value
+                Range("A" & idx).value = "A. " & tempValue
+            End If
+            Next idx
+        Case 2:
+            For idx = 1 To rowNumber
+            If idx Mod 2 = 0 Then
+                tempValue = Range("B" & idx).value
+                Range("B" & idx).value = "B. " & tempValue
+            End If
+            Next idx
+         Case 3:
+            For idx = 1 To rowNumber
+            If idx Mod 2 = 0 Then
+                tempValue = Range("C" & idx).value
+                Range("C" & idx).value = "C. " & tempValue
+            End If
+            Next idx
+        Case 4:
+            For idx = 1 To rowNumber
+            If idx Mod 2 = 0 Then
+                tempValue = Range("D" & idx).value
+                Range("D" & idx).value = "D. " & tempValue
+            End If
+            Next idx
+        End Select
+Next idxColumn
+        
+End Sub
+
+Sub stylePriceQuestions()
+Selection.Merge False
+With Selection.Font
+    .Name = "Arial"
+    .Size = 12
+    .Bold = True
+End With
+Selection.HorizontalAlignment = xlCenter
+Selection.Interior.ThemeColor = xlThemeColorAccent2
+Selection.Borders(xlEdgeTop).Weight = xlThick
+Selection.Borders(xlEdgeBottom).Weight = xlThick
+Selection.Borders(xlEdgeRight).Weight = xlThick
+Selection.Borders(xlEdgeLeft).Weight = xlThick
+
+End Sub
+Sub styleMoney()
+Selection.Merge False
+With Selection.Font
+    .Name = "Arial Black"
+    .Size = 12
+    .Bold = True
+End With
+End Sub
+Sub styleFinalAnswer()
+With Selection.Font
+    .Name = "Arial Black"
+    .Size = 12
+    .Bold = True
+    .Italic = True
+    .Color = RGB(255, 0, 0)
+End With
+Selection.HorizontalAlignment = xlCenter
+Selection.Interior.Color = RGB(0, 153, 153)
+Selection.Borders(xlEdgeTop).Weight = xlThick
+Selection.Borders(xlEdgeBottom).Weight = xlThick
+Selection.Borders(xlEdgeRight).Weight = xlThick
+Selection.Borders(xlEdgeLeft).Weight = xlThick
+    
+End Sub
+
+Sub defineSums(indexQuestion As Integer)
+Select Case indexQuestion
+    Case 1
+        currentMoneyValue = 0
+        nextMoneyValue = 100
+     Case 2
+        currentMoneyValue = 100
+        nextMoneyValue = 200
+     Case 3
+        currentMoneyValue = 200
+        nextMoneyValue = 300
+     Case 4
+        currentMoneyValue = 300
+        nextMoneyValue = 500
+     Case 5
+        currentMoneyValue = 500
+        nextMoneyValue = 1000
+     Case 6
+        currentMoneyValue = 1000
+        nextMoneyValue = 2000
+     Case 7
+        currentMoneyValue = 2000
+        nextMoneyValue = 3000
+      Case 8
+        currentMoneyValue = 3000
+        nextMoneyValue = 5000
+      Case 9
+        currentMoneyValue = 5000
+        nextMoneyValue = 7500
+      Case 10
+        currentMoneyValue = 7500
+        nextMoneyValue = 15000
+      Case 11
+        currentMoneyValue = 15000
+        nextMoneyValue = 45000
+      Case 12
+        currentMoneyValue = 45000
+        nextMoneyValue = 100000
+      Case 13
+        currentMoneyValue = 100000
+        nextMoneyValue = 250000
+      Case 14
+        currentMoneyValue = 250000
+        nextMoneyValue = 500000
+      Case 15
+        currentMoneyValue = 500000
+        nextMoneyValue = 1000000
+    End Select
+    
+        
+    
+    
+        
+
+
+
+
+
+Sub colorCorrectAnswer(correctAns As String)
+    Select Case correctAns
+        Case "A"
+            Range("I14").Interior.Color = RGB(0, 255, 0)
+        Case "B"
+            Range("o14").Interior.Color = RGB(0, 255, 0)
+        Case "C"
+            Range("i16").Interior.Color = RGB(0, 255, 0)
+        Case "D"
+            Range("o16").Interior.Color = RGB(0, 255, 0)
+        End Select
+    
+End Sub
+
+Sub colorAnswersWrong(correctAns As String, givenAns As String)
+    Select Case UCase(givenAns)
+        Case "A"
+        Range("I14").Interior.Color = RGB(255, 0, 0)
+        Select Case UCase(correctAns)
+            Case "B"
+                Range("o14").Interior.Color = RGB(0, 255, 0)
+            Case "C"
+                Range("i16").Interior.Color = RGB(0, 255, 0)
+            Case "D"
+                Range("o16").Interior.Color = RGB(0, 255, 0)
+        End Select
+        Case "B"
+        Range("O14").Interior.Color = RGB(255, 0, 0)
+        Select Case UCase(correctAns)
+            Case "A"
+                Range("i14").Interior.Color = RGB(0, 255, 0)
+            Case "C"
+                Range("i16").Interior.Color = RGB(0, 255, 0)
+            Case "D"
+                Range("o16").Interior.Color = RGB(0, 255, 0)
+        End Select
+        Case "C"
+        Range("i16").Interior.Color = RGB(255, 0, 0)
+        Select Case UCase(correctAns)
+            Case "A"
+                Range("i14").Interior.Color = RGB(0, 255, 0)
+            Case "B"
+                Range("o14").Interior.Color = RGB(0, 255, 0)
+            Case "D"
+                Range("o16").Interior.Color = RGB(0, 255, 0)
+        End Select
+        Case "D"
+        Range("o16").Interior.Color = RGB(255, 0, 0)
+        Select Case UCase(correctAns)
+            Case "A"
+                Range("i14").Interior.Color = RGB(0, 255, 0)
+            Case "B"
+                Range("o14").Interior.Color = RGB(0, 255, 0)
+            Case "C"
+                Range("i16").Interior.Color = RGB(0, 255, 0)
+            End Select
+        Case Else
+            MsgBox ("Raspunsul corect era " & correctAns)
+            Call colorCorrectAnswer(correctAns)
+            
+    End Select
+End Sub
+
+
+    
+
+End Function
+
+Sub createPlayGame(idxSheet As Integer, valueWon As Long, correctAnswer As String, currentValue As Long)
+
+Dim contestantInput As Integer
+Dim message As String
+Dim title As String
+Dim optionChoices As String
+Dim checkIfContestantSure As Integer
+Dim correctOptionCell As Integer
+'50/50 variables
+Dim wrongAnswer1 As Integer
+Dim wrongAnswer2 As Integer
+'Change Question variables
+Dim numberOfQuestions, idxCopyAnswer As Integer
+Dim sheetName As String
+Dim idxRowStartAnswer As Integer: idxRowStartAnswer = 14
+'Ask audience variables
+Dim q1 As Boolean: q1 = True
+Dim q2 As Boolean: q2 = True
+Dim q3 As Boolean: q3 = True
+Dim q4 As Boolean: q4 = True
+Dim sumValue As Double: sumValue = 100
+Dim generatedValue As Double
+Dim remainingValue As Double
+Dim generatedValue2 As Double
+Dim generatedValue3 As Double
+Dim value4 As Double
+Dim isFiftyUsedWithAskAudience As Boolean
+
+
+message = "Ce optiune preferi?" & vbCrLf & "1. Raspuns Final" & vbCrLf & "2. Ma retrag aici" & vbCrLf & "3. Varianta 50/50" & vbCrLf & _
+"4. Schimba Intrebarea" & vbCrLf & "5. Intreaba publicul"
+title = "VREI SA FII MILIONAR?"
+optionChoices = "1/2/3/4/5"
+
+contestantInput = InputBox(message, title, optionChoices, 11000, 10000)
+
+If contestantInput < 1 Or contestantInput > 5 Then
+    Call createPlayGame(idxSheet, valueWon, correctAnswer, currentValue)
+End If
+Select Case contestantInput
+    Case 1:
+        contestantAnswer = InputBox("Care este raspunsul tau?", "RASPUNS", "A/B/C/D", 11000, 10000)
+        Range("S18").value = contestantAnswer
+        checkIfContestantSure = MsgBox("Este decizia ta finala?", vbYesNo)
+        If checkIfContestantSure = vbNo Then
+            Call createPlayGame(idxSheet, valueWon, correctAnswer, currentValue)
+        Else
+            answer = checkAnswerContestant(idxSheet, valueWon, contestantAnswer, correctAnswer)
+            GoTo final
+        End If
+    Case 2:
+        MsgBox ("Felicitari! Ai castigat un cec in valoare de " & currentValue & " RON")
+        contestantAnswer = ""
+        answer = False
+    Case 3:
+        'to be completed
+        Call checkIfHelplineUsed(3, listHelpLines)
+        If isHelplineUsed = True Then
+            MsgBox ("Aceasta varianta ajutatoare deja a fost folosita!")
+            Call createPlayGame(idxSheet, valueWon, correctAnswer, currentValue)
+        Else
+            'check in which cell we have the correct answer
+            If Left(Range("i14").value, 1) = correctAnswer Then
+                correctOptionCell = 1
+            ElseIf Left(Range("o14").value, 1) = correctAnswer Then
+                correctOptionCell = 2
+            ElseIf Left(Range("i16").value, 1) = correctAnswer Then
+                correctOptionCell = 3
+            ElseIf Left(Range("o16").value, 1) = correctAnswer Then
+                correctOptionCell = 4
+            End If
+            'generate random numbers to delete wrong questions
+            wrongAnswer1 = WorksheetFunction.RandBetween(1, 4)
+            Do While wrongAnswer1 = correctOptionCell
+                wrongAnswer1 = WorksheetFunction.RandBetween(1, 4)
+            Loop
+            wrongAnswer2 = WorksheetFunction.RandBetween(1, 4)
+            Do While wrongAnswer2 = correctOptionCell Or wrongAnswer2 = wrongAnswer1
+                wrongAnswer2 = WorksheetFunction.RandBetween(1, 4)
+            Loop
+            'eliminate the questions
+            Application.Wait (Now + TimeValue("00:00:03"))
+            Select Case wrongAnswer1
+                Case 1
+                    Range("I14").value = ""
+                Case 2
+                    Range("o14").value = ""
+                Case 3
+                    Range("i16").value = ""
+                Case 4
+                    Range("o16").value = ""
+            End Select
+            Select Case wrongAnswer2
+                Case 1
+                    Range("I14").value = ""
+                Case 2
+                    Range("o14").value = ""
+                Case 3
+                    Range("i16").value = ""
+                Case 4
+                    Range("o16").value = ""
+            End Select
+            listHelpLines.Add (3)
+            Call createPlayGame(idxSheet, valueWon, correctAnswer, currentValue)
+        End If
+       
+    Case 4:
+        'to be completed
+        Call checkIfHelplineUsed(4, listHelpLines)
+        If isHelplineUsed = True Then
+            MsgBox ("Aceasta varianta ajutatoare deja a fost folosita!")
+            Call createPlayGame(idxSheet, valueWon, correctAnswer, currentValue)
+        Else
+            sheetName = ActiveSheet.Name
+            Worksheets("Questions").Activate
+            Range("A1").Select
+            Selection.End(xlDown).Select
+            numberOfQuestions = Selection.row
+            Call chooseRandomQuestion(numberOfQuestions)
+            Call checkIfValueIsPresentInCollection(numberQuestionChosen, listIndices)
+            Do While isValuePresent = True
+                Call chooseRandomQuestion(numberOfQuestions)
+                Call checkIfValueIsPresentInCollection(numberQuestionChosen, listIndices)
+            Loop
+            listIndices.Add (numberQuestionChosen)
+            Application.Wait (Now + TimeValue("00:00:05"))
+            Cells(numberQuestionChosen, 1).Select
+            Selection.Copy
+            Worksheets(sheetName).Activate
+            Range("i9").Select
+            ActiveSheet.Paste
+            ' go back to questions and take the answers
+            Worksheets("Questions").Activate
+            Cells(numberQuestionChosen, 1).Offset(1, 0).Select
+            Selection.Copy
+            Worksheets(sheetName).Activate
+            Range("i" & idxRowStartAnswer).Select
+            ActiveSheet.Paste
+            For idxCopyAnswer = 1 To 4 'first is already copied
+                Worksheets("Questions").Activate
+                Cells(numberQuestionChosen, 1).Offset(1, idxCopyAnswer).Select
+                Selection.Copy
+                Worksheets(sheetName).Activate
+                If idxCopyAnswer = 1 Then
+                    Range("o" & idxRowStartAnswer).Select
+                    ActiveSheet.Paste
+                ElseIf idxCopyAnswer = 2 Then
+                    Range("i" & idxRowStartAnswer + idxCopyAnswer).Select
+                    ActiveSheet.Paste
+                ElseIf idxCopyAnswer = 3 Then
+                    Range("o" & idxRowStartAnswer + idxCopyAnswer - 1).Select
+                    ActiveSheet.Paste
+                Else:
+                    Range("A1").Select
+                    ActiveSheet.Paste
+                    Selection.Font.Color = vbWhite
+                    correctAnswer = Range("A1").value
+                End If
+            Next idxCopyAnswer
+            listHelpLines.Add (4)
+            Call createPlayGame(idxSheet, valueWon, correctAnswer, currentValue)
+         End If
+    Case 5:
+        'to be completed
+        Call checkIfHelplineUsed(5, listHelpLines)
+        If isHelplineUsed = True Then
+            MsgBox ("Aceasta varianta ajutatoare deja a fost folosita!")
+            Call createPlayGame(idxSheet, valueWon, correctAnswer, currentValue)
+        Else
+            'check first if 50/50 was used
+            isFiftyUsedWithAskAudience = checkIfFiftyFiftyIsAlsoUsed()
+            If isFiftyUsedWithAskAudience = True Then
+                'see what answers still remain there
+                If Range("i14").value = "" Then
+                    q1 = False
+                End If
+                If Range("o14").value = "" Then
+                    q2 = False
+                End If
+                If Range("i16").value = "" Then
+                    q3 = False
+                End If
+                If Range("o16").value = "" Then
+                    q4 = False
+                End If
+                ' there can be 2 visibles and 2 blanks
+                Select Case True
+                    Case q1 = False And q2 = False
+                        generatedValue = WorksheetFunction.RandBetween(1, 100)
+                        remainingValue = sumValue - generatedValue
+                        Call createOptionsMissing(Range("i16").value, Range("o16").value)
+                        Call createValuesGenerated(generatedValue, remainingValue)
+                        Call InsertChart
+                    Case q1 = False And q3 = False
+                        generatedValue = WorksheetFunction.RandBetween(1, 100)
+                        remainingValue = sumValue - generatedValue
+                        Call createOptionsMissing(Range("o14").value, Range("o16").value)
+                        Call createValuesGenerated(generatedValue, remainingValue)
+                        Call InsertChart
+                    Case q1 = False And q4 = False
+                        generatedValue = WorksheetFunction.RandBetween(1, 100)
+                        remainingValue = sumValue - generatedValue
+                        Call createOptionsMissing(Range("o14").value, Range("i16").value)
+                        Call createValuesGenerated(generatedValue, remainingValue)
+                        Call InsertChart
+                    Case q2 = False And q3 = False
+                        generatedValue = WorksheetFunction.RandBetween(1, 100)
+                        remainingValue = sumValue - generatedValue
+                        Call createOptionsMissing(Range("i14").value, Range("o16").value)
+                        Call createValuesGenerated(generatedValue, remainingValue)
+                        Call InsertChart
+                    Case q2 = False And q4 = False
+                        generatedValue = WorksheetFunction.RandBetween(1, 100)
+                        remainingValue = sumValue - generatedValue
+                        Call createOptionsMissing(Range("i14").value, Range("i16").value)
+                        Call createValuesGenerated(generatedValue, remainingValue)
+                        Call InsertChart
+                    Case q3 = False And q4 = False
+                        generatedValue = WorksheetFunction.RandBetween(1, 100)
+                        remainingValue = sumValue - generatedValue
+                        Call createOptionsMissing(Range("i14").value, Range("o14").value)
+                        Call createValuesGenerated(generatedValue, remainingValue)
+                        Call InsertChart
+                    End Select
+                listHelpLines.Add (5)
+                Application.Wait (Now + TimeValue("00:00:05"))
+                Call createPlayGame(idxSheet, valueWon, correctAnswer, currentValue)
+            Else
+                generatedValue = WorksheetFunction.RandBetween(1, 100)
+                remainingValue = sumValue - generatedValue
+                If generatedValue = 100 Then
+                    generatedValue2 = 0
+                    generatedValue3 = 0
+                    value4 = 0
+                ElseIf remainingValue < 15 And remainingValue > 5 Then
+                    generatedValue2 = remainingValue - 5
+                    generatedValue3 = remainingValue - generatedValue2
+                    value4 = 0
+                Else
+                    generatedValue2 = WorksheetFunction.RandBetween(1, remainingValue)
+                    Do While generatedValue + generatedValue2 > sumValue
+                        generatedValue2 = WorksheetFunction.RandBetween(1, remainingValue)
+                    Loop
+                    remainingValue = remainingValue - generatedValue2
+                    If remainingValue < 15 And remainingValue > 5 Then
+                        generatedValue3 = remainingValue - 5
+                        value4 = remainingValue - generatedValue3
+                    Else
+                        generatedValue3 = WorksheetFunction.RandBetween(1, remainingValue)
+                        Do While generatedValue + generatedValue2 + generatedValue3 > sumValue
+                            generatedValue3 = WorksheetFunction.RandBetween(1, remainingValue)
+                        Loop
+                        value4 = remainingValue - generatedValue3
+                    End If
+                End If
+                Call createAllBlanks(generatedValue, generatedValue2, generatedValue3, value4)
+                Call InsertChart
+                Application.Wait (Now + TimeValue("00:00:05"))
+                listHelpLines.Add (5)
+                Call createPlayGame(idxSheet, valueWon, correctAnswer, currentValue)
+            End If
+        End If
+    End Select
+final:
+
+End Sub
+
+
+
+Sub InsertChart()
+Dim chart As Shape
+
+Range("B16:E17").Select
+    ActiveSheet.Shapes.AddChart2(201, xlColumnClustered).Select
+    ActiveChart.SetSourceData Source:=Range("$B$16:$E$17")
+    Set chart = ActiveSheet.Shapes(1)
+    chart.Name = "Sondaj"
+    ActiveSheet.Shapes("Sondaj").IncrementLeft -387
+    ActiveSheet.Shapes("Sondaj").IncrementTop 101.25
+    ActiveSheet.Shapes("Sondaj").ScaleWidth 1.3, msoFalse
+    ActiveChart.ChartTitle.Select
+    ActiveChart.ChartTitle.Text = "Sondaj Public"
+    Selection.Format.TextFrame2.TextRange.Characters.Text = "Sondaj Public"
+    ActiveChart.Axes(xlCategory, xlPrimary).HasTitle = True
+    ActiveChart.Axes(xlCategory, xlPrimary).AxisTitle.Text = "Variante raspuns"
+    ActiveChart.Axes(xlCategory, xlPrimary).AxisTitle.Left = 200
+    ActiveChart.Axes(xlValue, xlPrimary).HasTitle = True
+    ActiveChart.Axes(xlValue, xlPrimary).AxisTitle.Text = "Procentaj"
+    ActiveChart.Axes(xlCategory).CategoryNames = _
+    Array(Range("b16").value, Range("c16").value, Range("d16").value, Range("e16").value)
+    ActiveChart.ApplyDataLabels xlDataLabelsShowValue
+    If Range("D16").value = "" And Range("E16").value = "" Then
+        ActiveChart.SeriesCollection(1).Name = Range("B16").value
+        ActiveChart.SeriesCollection(1).Interior.Color = RGB(255, 128, 0)
+        ActiveChart.SeriesCollection(2).Name = Range("C16").value
+        ActiveChart.SeriesCollection(2).Interior.Color = RGB(255, 128, 0)
+    End If
+    
+    
+    
+    
+End Sub
+
+Sub createOptionsMissing(optionAns1 As String, optionAns2 As String)
+    Range("B16").value = optionAns1
+    Range("B16").Font.Color = vbWhite
+    Range("c16").value = optionAns2
+    Range("c16").Font.Color = vbWhite
+                        
+    Range("b17").NumberFormat = "0%"
+    Range("C17").NumberFormat = "0%"
+
+End Sub
+
+Sub createValuesGenerated(value1 As Double, value2 As Double)
+Range("b17").value = value1 / 100
+Range("c17").value = value2 / 100
+Range("B17").Font.Color = vbWhite
+Range("c17").Font.Color = vbWhite
+End Sub
+
+Sub createAllBlanks(value1 As Double, value2 As Double, value3 As Double, value4 As Double)
+Range("b16").value = Range("i14").value
+Range("B16").Font.Color = vbWhite
+Range("c16").value = Range("o14").value
+Range("c16").Font.Color = vbWhite
+Range("d16").value = Range("i16").value
+Range("d16").Font.Color = vbWhite
+Range("e16").value = Range("o16").value
+Range("e16").Font.Color = vbWhite
+
+Range("b17").value = value1 / 100
+Range("B17").Font.Color = vbWhite
+Range("c17").value = value2 / 100
+Range("c17").Font.Color = vbWhite
+Range("d17").value = value3 / 100
+Range("d17").Font.Color = vbWhite
+Range("e17").value = value4 / 100
+Range("e17").Font.Color = vbWhite
+
+Range("b17").NumberFormat = "0%"
+Range("C17").NumberFormat = "0%"
+Range("E17").NumberFormat = "0%"
+Range("D17").NumberFormat = "0%"
+
+End Sub
+
+'functions
+Public Function checkAnswerContestant(ByRef idxWorksheet As Integer, ByRef valueWon As Long, ByRef ans As String, ByRef correctAnswer As String) As Boolean
+'Dim correctAnswer As String
+
+'correctAnswer = Range("A1").Value
+If UCase(ans) = correctAnswer And valueWon = 1000000 Then
+    MsgBox ("Felictari! Esti milionar la Vrei sa fii milionar")
+    checkAnswerContestant = True
+ElseIf UCase(ans) = correctAnswer Then
+    MsgBox ("Raspuns corect. Ai castigat " & valueWon & "RON")
+    checkAnswerContestant = True
+Else:
+    If idxWorksheet > 5 And idxWorksheet < 11 Then
+        MsgBox ("Raspunsul este gresit. Raspunsul corect este " & correctAnswer & vbCrLf & _
+        "Ai castigat 1000 RON")
+        checkAnswerContestant = False
+    ElseIf idxWorksheet > 10 And idxWorksheet < 15 Then
+         MsgBox ("Raspunsul este gresit. Raspunsul corect este " & correctAnswer & vbCrLf & _
+        "Ai castigat 15000 RON")
+        checkAnswerContestant = False
+    Else
+        MsgBox ("Raspunsul este gresit. Raspunsul corect este " & correctAnswer & vbCrLf & _
+        "Din pacate pleci acasa fara nici un ban")
+        checkAnswerContestant = False
+    End If
+End If
+    
+End Function
+
+Public Function checkIfHelplineUsed(ByRef number As Integer, ByRef list As Collection) As Boolean
+Dim idxList As Variant
+isHelplineUsed = False
+For Each idxList In list
+    If number = idxList Then
+        isHelplineUsed = True
+        Exit For
+    End If
+Next idxList
+
+End Function
+
+
+Public Function checkIfFiftyFiftyIsAlsoUsed() As Boolean
+
+If Range("i14").value = "" Or Range("o14").value = "" Or Range("i16").value = "" Or Range("o16").value = "" Then
+   checkIfFiftyFiftyIsAlsoUsed = True
+Else
+    checkIfFiftyFiftyIsAlsoUsed = False
+End If
+End Function
+
+Public Function checkIfValueIsPresentInCollection(ByRef number As Integer, ByRef list As Collection) As Boolean
+Dim idxColl As Variant
+isValuePresent = False
+For Each idxColl In list
+    If idxColl = number Then
+        isValuePresent = True
+        Exit For
+    End If
+Next idxColl
+
