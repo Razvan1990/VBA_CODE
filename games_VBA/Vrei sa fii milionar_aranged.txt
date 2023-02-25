@@ -587,6 +587,9 @@ Select Case contestantInput
             MsgBox ("Aceasta varianta ajutatoare deja a fost folosita!")
             Call createPlayGame(idxSheet, valueWon, correctAnswer, currentValue)
         Else
+            If ActiveSheet.Shapes.Count >0 Then
+                ActiveSheet.Shapes("Sondaj").Delete
+            End if
             sheetName = ActiveSheet.Name
             Worksheets("Questions").Activate
             Range("A1").Select
