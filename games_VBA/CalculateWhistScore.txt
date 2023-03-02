@@ -1,43 +1,223 @@
-Public Function Calculate(gameNumber As Integer, handsMade As Integer, bidNumber As Integer, previousResult) As Integer
-Static stopConditionYes As Integer
-Static stopConditionNo As Integer
+Public Function Calculate(gameNumber As Integer, handsMade As Integer, bidNumber As Integer, previousResult, playerName As String) As Integer
+Static stopConditionYesPLayer1, stopConditionNoPlayer1 As Integer
+Static stopConditionYesPLayer2, stopConditionNoPlayer2 As Integer
+Static stopConditionYesPLayer3, stopConditionNoPlayer3 As Integer
+Static stopConditionYesPLayer4, stopConditionNoPlayer4 As Integer
+Static stopConditionYesPLayer5, stopConditionNoPlayer5 As Integer
+Static stopConditionYesPLayer6, stopConditionNoPlayer6 As Integer
 
-If IsNumeric(previousResult) Then
-    If gameNumber <> 1 And stopConditionYes = 4 And handsMade = bidNumber Then
-        Calculate = 10 + bidNumber + 5 + previousResult
-        stopConditionYes = 0
-        stopConditionNo = 0
-    ElseIf gameNumber <> 1 And stopConditionNo = 4 And handsMade <> bidNumber Then
-        Calculate = previousResult - 10 - Abs(handsMade - bidNumber)
-        stopConditionNo = 0
-        stopConditionYes = 0
-    ElseIf gameNumber <> 1 And handsMade = bidNumber Then
-        Calculate = previousResult + bidNumber + 5
-        stopConditionYes = stopConditionYes + 1
-        stopConditionNo = 0
-    ElseIf gameNumber <> 1 And handsMade <> bidNumber Then
-        Calculate = previousResult - Abs(handsMade - bidNumber)
-        stopConditionNo = stopConditionNo + 1
-        stopConditionYes = 0
-    Else:
-        If handsMade = bidNumber Then
-            Calculate = previousResult + bidNumber + 5
-            
+    If Range("c4").Value = playerName Then
+        If IsNumeric(previousResult) Then
+            If gameNumber <> 1 And stopConditionYesPLayer1 = 4 And handsMade = bidNumber Then
+                Calculate = 10 + bidNumber + 5 + previousResult
+                stopConditionYesPLayer1 = 0
+                stopConditionNoPlayer1 = 0
+            ElseIf gameNumber <> 1 And stopConditionNoPlayer1 = 4 And handsMade <> bidNumber Then
+                Calculate = previousResult - 10 - Abs(handsMade - bidNumber)
+                stopConditionNoPlayer1 = 0
+                stopConditionYesPLayer1 = 0
+            ElseIf gameNumber <> 1 And handsMade = bidNumber Then
+                Calculate = previousResult + bidNumber + 5
+                stopConditionYesPLayer1 = stopConditionYesPLayer1 + 1
+                stopConditionNoPlayer1 = 0
+            ElseIf gameNumber <> 1 And handsMade <> bidNumber Then
+                Calculate = previousResult - Abs(handsMade - bidNumber)
+                stopConditionNoPlayer1 = stopConditionNoPlayer1 + 1
+                stopConditionYesPLayer1 = 0
+            Else:
+                If handsMade = bidNumber Then
+                    Calculate = previousResult + bidNumber + 5
+                    
+                Else:
+                    Calculate = previousResult - Abs(handsMade - bidNumber)
+                End If
+            End If
         Else:
-            Calculate = previousResult - Abs(handsMade - bidNumber)
+            'just for first cell
+            If handsMade = bidNumber Then
+                Calculate = bidNumber + 5
+            Else:
+                Calculate = -1
+            End If
+        End If
+    ElseIf Range("f4").Value = playerName Then
+        If IsNumeric(previousResult) Then
+            If gameNumber <> 1 And stopConditionYesPLayer2 = 4 And handsMade = bidNumber Then
+                Calculate = 10 + bidNumber + 5 + previousResult
+                stopConditionYesPLayer2 = 0
+                stopConditionNoPlayer2 = 0
+                
+            ElseIf gameNumber <> 1 And stopConditionNoPlayer2 = 4 And handsMade <> bidNumber Then
+                Calculate = previousResult - 10 - Abs(handsMade - bidNumber)
+                stopConditionNoPlayer2 = 0
+                stopConditionYesPLayer2 = 0
+            ElseIf gameNumber <> 1 And handsMade = bidNumber Then
+                Calculate = previousResult + bidNumber + 5
+                stopConditionYesPLayer2 = stopConditionYesPLayer2 + 1
+                stopConditionNoPlayer2 = 0
+            ElseIf gameNumber <> 1 And handsMade <> bidNumber Then
+                Calculate = previousResult - Abs(handsMade - bidNumber)
+                stopConditionNoPlayer2 = stopConditionNoPlayer2 + 1
+                stopConditionYesPLayer2 = 0
+            Else:
+                If handsMade = bidNumber Then
+                    Calculate = previousResult + bidNumber + 5
+                    
+                Else:
+                    Calculate = previousResult - Abs(handsMade - bidNumber)
+                End If
+            End If
+        Else:
+            'just for first cell
+            If handsMade = bidNumber Then
+                Calculate = bidNumber + 5
+            Else:
+                Calculate = -1
+            End If
+        End If
+   ElseIf Range("i4").Value = playerName Then
+        If IsNumeric(previousResult) Then
+            If gameNumber <> 1 And stopConditionYesPLayer3 = 4 And handsMade = bidNumber Then
+                Calculate = 10 + bidNumber + 5 + previousResult
+                stopConditionYesPLayer3 = 0
+                stopConditionNoPlayer3 = 0
+            ElseIf gameNumber <> 1 And stopConditionNoPlayer3 = 4 And handsMade <> bidNumber Then
+                Calculate = previousResult - 10 - Abs(handsMade - bidNumber)
+                stopConditionNoPlayer3 = 0
+                stopConditionYesPLayer3 = 0
+            ElseIf gameNumber <> 1 And handsMade = bidNumber Then
+                Calculate = previousResult + bidNumber + 5
+                stopConditionYesPLayer3 = stopConditionYesPLayer3 + 1
+                stopConditionNoPlayer3 = 0
+            ElseIf gameNumber <> 1 And handsMade <> bidNumber Then
+                Calculate = previousResult - Abs(handsMade - bidNumber)
+                stopConditionNoPlayer3 = stopConditionNoPlayer3 + 1
+                stopConditionYesPLayer3 = 0
+            Else:
+                If handsMade = bidNumber Then
+                    Calculate = previousResult + bidNumber + 5
+                    
+                Else:
+                    Calculate = previousResult - Abs(handsMade - bidNumber)
+                End If
+            End If
+        Else:
+            'just for first cell
+            If handsMade = bidNumber Then
+                Calculate = bidNumber + 5
+            Else:
+                Calculate = -1
+            End If
+        End If
+    ElseIf Range("l4").Value = playerName Then
+        If IsNumeric(previousResult) Then
+            If gameNumber <> 1 And stopConditionYesPLayer4 = 4 And handsMade = bidNumber Then
+                Calculate = 10 + bidNumber + 5 + previousResult
+                stopConditionYesPLayer4 = 0
+                stopConditionNoPlayer4 = 0
+            ElseIf gameNumber <> 1 And stopConditionNoPlayer4 = 4 And handsMade <> bidNumber Then
+                Calculate = previousResult - 10 - Abs(handsMade - bidNumber)
+                stopConditionNoPlayer4 = 0
+                stopConditionYesPLayer4 = 0
+            ElseIf gameNumber <> 1 And handsMade = bidNumber Then
+                Calculate = previousResult + bidNumber + 5
+                stopConditionYesPLayer4 = stopConditionYesPLayer4 + 1
+                stopConditionNoPlayer4 = 0
+            ElseIf gameNumber <> 1 And handsMade <> bidNumber Then
+                Calculate = previousResult - Abs(handsMade - bidNumber)
+                stopConditionNoPlayer4 = stopConditionNoPlayer4 + 1
+                stopConditionYesPLayer4 = 0
+            Else:
+                If handsMade = bidNumber Then
+                    Calculate = previousResult + bidNumber + 5
+                    
+                Else:
+                    Calculate = previousResult - Abs(handsMade - bidNumber)
+                End If
+            End If
+        Else:
+            'just for first cell
+            If handsMade = bidNumber Then
+                Calculate = bidNumber + 5
+            Else:
+                Calculate = -1
+            End If
+        End If
+    ElseIf Range("o4").Value = playerName Then
+        If IsNumeric(previousResult) Then
+            If gameNumber <> 1 And stopConditionYesPLayer5 = 4 And handsMade = bidNumber Then
+                Calculate = 10 + bidNumber + 5 + previousResult
+                stopConditionYesPLayer5 = 0
+                stopConditionNoPlayer5 = 0
+            ElseIf gameNumber <> 1 And stopConditionNoPlayer5 = 4 And handsMade <> bidNumber Then
+                Calculate = previousResult - 10 - Abs(handsMade - bidNumber)
+                stopConditionNoPlayer5 = 0
+                stopConditionYesPLayer5 = 0
+            ElseIf gameNumber <> 1 And handsMade = bidNumber Then
+                Calculate = previousResult + bidNumber + 5
+                stopConditionYesPLayer5 = stopConditionYesPLayer5 + 1
+                stopConditionNoPlayer5 = 0
+            ElseIf gameNumber <> 1 And handsMade <> bidNumber Then
+                Calculate = previousResult - Abs(handsMade - bidNumber)
+                stopConditionNoPlayer5 = stopConditionNoPlayer5 + 1
+                stopConditionYesPLayer5 = 0
+            Else:
+                If handsMade = bidNumber Then
+                    Calculate = previousResult + bidNumber + 5
+                    
+                Else:
+                    Calculate = previousResult - Abs(handsMade - bidNumber)
+                End If
+            End If
+        Else:
+            'just for first cell
+            If handsMade = bidNumber Then
+                Calculate = bidNumber + 5
+            Else:
+                Calculate = -1
+            End If
+        End If
+    ElseIf Range("r4").Value = playerName Then
+        If IsNumeric(previousResult) Then
+            If gameNumber <> 1 And stopConditionYesPLayer6 = 4 And handsMade = bidNumber Then
+                Calculate = 10 + bidNumber + 5 + previousResult
+                stopConditionYesPLayer6 = 0
+                stopConditionNoPlayer6 = 0
+            ElseIf gameNumber <> 1 And stopConditionNoPlayer6 = 4 And handsMade <> bidNumber Then
+                Calculate = previousResult - 10 - Abs(handsMade - bidNumber)
+                stopConditionNoPlayer6 = 0
+                stopConditionYesPLayer6 = 0
+            ElseIf gameNumber <> 1 And handsMade = bidNumber Then
+                Calculate = previousResult + bidNumber + 5
+                stopConditionYesPLayer6 = stopConditionYesPLayer6 + 1
+                stopConditionNoPlayer6 = 0
+            ElseIf gameNumber <> 1 And handsMade <> bidNumber Then
+                Calculate = previousResult - Abs(handsMade - bidNumber)
+                stopConditionNoPlayer6 = stopConditionNoPlayer6 + 1
+                stopConditionYesPLayer6 = 0
+            Else:
+                If handsMade = bidNumber Then
+                    Calculate = previousResult + bidNumber + 5
+                    
+                Else:
+                    Calculate = previousResult - Abs(handsMade - bidNumber)
+                End If
+            End If
+        Else:
+            'just for first cell
+            If handsMade = bidNumber Then
+                Calculate = bidNumber + 5
+            Else:
+                Calculate = -1
+            End If
         End If
     End If
-Else:
-    'just for first cell
-    If handsMade = bidNumber Then
-        Calculate = bidNumber + 5
-    Else:
-        Calculate = -1
-    End If
-End If
-
-
+    
 
 End Function
+
+
+
+
 
 
