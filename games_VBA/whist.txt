@@ -1,4 +1,4 @@
-Sub whistGenerator()
+Sub createWhistGenerator()
 Dim x As Integer
 Dim idxInner As Integer
 Dim rowValue As Integer
@@ -71,22 +71,22 @@ Range("C5").Select
 ' we will use a for into create our subheaders
 For idx = 1 To x
     If idx = x Then ' using this we can easily get the last column
-        Selection.Value = "Bid"
+        Selection.value = "Bid"
         Call formatHeadersSmall
         Selection.Offset(0, 1).Select
-        Selection.Value = "Done?"
+        Selection.value = "Done?"
         Call formatHeadersSmall
         Selection.Offset(0, 1).Select
-        Selection.Value = "SCORE"
+        Selection.value = "SCORE"
         Call formatHeadersSmall
     Else:
-        Selection.Value = "Bid"
+        Selection.value = "Bid"
         Call formatHeadersSmall
         Selection.Offset(0, 1).Select
-        Selection.Value = "Done"
+        Selection.value = "Done"
         Call formatHeadersSmall
         Selection.Offset(0, 1).Select
-        Selection.Value = "SCORE"
+        Selection.value = "SCORE"
         Call formatHeadersSmall
         Selection.Offset(0, 1).Select
     End If
@@ -115,7 +115,7 @@ For idx = 1 To x
     concatenatedColumnNumber = colNumber1 & ":" & colNumber2
     Range(concatenatedColumnNumber).Merge False
     Range(concatenatedColumnNumber).Select
-    Selection.Value = "Player" & idx
+    Selection.value = "Player" & idx
     Call formatHeadersBig
     Selection.Offset(1, 0).Select
     Selection.Offset(0, 2).Select
@@ -135,7 +135,11 @@ Next idx
 
 Columns.EntireColumn.AutoFit
 
-Call InsertButton
+'Call InsertButton
+'Call calculateScoreAutomatically(x)
+Call calculateFormula
+Call removeExtras(x)
+Range("A1").Select
 
 End Sub
 Sub InsertButton()
@@ -171,7 +175,7 @@ End Sub
 
 Sub GenerateYesNo()
 Range("b4:b5").Merge False
-Range("B4").Value = "GameNr"
+Range("B4").value = "GameNr"
 Range("B4").Select
 Call formatHeadersBig
 Range("B6").Select
@@ -260,7 +264,179 @@ Selection.Borders(xlEdgeRight).LineStyle = xlContinous
 Selection.Borders(xlEdgeRight).Weight = xlThick
 End Sub
 
+Sub calculateScoreAutomatically(nrPLayers As Integer)
+' we know that we will start at column E at row 6
+Dim idxColumn As Integer
+Dim idxRow As Integer
+Dim cellStart As String
+Dim lastRowIndex As Integer
+Dim sheet As String
+Dim formulaCell As String
 
+'get last row
+sheet = ActiveSheet.Name
+cellStart = "E6"
+Call getLastRow(nrPLayers)
+lastRowIndex = Selection.row
+Worksheets(sheet).Range(cellStart).Select
+For idxColumn = 1 To nrPLayers
+    For idxRow = 6 To lastRowIndex
+        '= IF(OR(C6="", D6 =""), "", Calculate(B6,D6,C6,E5,C4))
+        Selection.value = "=IF(OR(RC[-2] ="""", RC[-1] =""""), """", Calculate(RC[-3], RC[-1], RC[-2], R[-1]C), R4C[-2])"
+        'ActiveCell.R1C1 = formulaCell
+        Selection.Offset(1, 0).Select
+    Next idxRow
+    Range(cellStart).Select
+    Range(cellStart).Offset(0, 3 * idxColumn).Select
+Next idxColumn
+        
+End Sub
+
+
+
+Sub getLastRow(nrPLayers As Integer)
+cellStart = "E6"
+Select Case nrPLayers
+    Case 4
+        Range("e29").Select
+    Case 5
+        Range("E32").Select
+    Case 6
+        Range("E35").Select
+End Select
+
+    
+        
+        
+
+
+End Sub
+
+
+Sub calculateFormula()
+'
+' calculateFormula Macro
+'
+
+   Range("E6").Select
+    ActiveCell.FormulaR1C1 = _
+        "=IF(OR(RC[-2]="""",RC[-1]=""""),"""",Calculate(RC[-3],RC[-1],RC[-2],R[-1]C,R4C[-2]))"
+    ActiveCell.Select
+    Selection.AutoFill destination:=Range("e6:e35"), Type:= _
+        xlFillDefault
+    Range("h6").Select
+    ActiveCell.FormulaR1C1 = _
+        "=IF(OR(RC[-2]="""",RC[-1]=""""),"""",Calculate(RC[-6],RC[-1],RC[-2],R[-1]C,R4C[-2]))"
+    ActiveCell.Select
+    Selection.AutoFill destination:=Range("h6:h35"), Type:= _
+        xlFillDefault
+    Range("k6").Select
+    ActiveCell.FormulaR1C1 = _
+        "=IF(OR(RC[-2]="""",RC[-1]=""""),"""",Calculate(RC[-9],RC[-1],RC[-2],R[-1]C,R4C[-2]))"
+    ActiveCell.Select
+    Selection.AutoFill destination:=Range("k6:k35"), Type:= _
+        xlFillDefault
+    Range("n6").Select
+    ActiveCell.FormulaR1C1 = _
+        "=IF(OR(RC[-2]="""",RC[-1]=""""),"""",Calculate(RC[-12],RC[-1],RC[-2],R[-1]C,R4C[-2]))"
+    ActiveCell.Select
+    Selection.AutoFill destination:=Range("n6:n35"), Type:= _
+        xlFillDefault
+    Range("q6").Select
+    ActiveCell.FormulaR1C1 = _
+        "=IF(OR(RC[-2]="""",RC[-1]=""""),"""",Calculate(RC[-15],RC[-1],RC[-2],R[-1]C,R4C[-2]))"
+    ActiveCell.Select
+    Selection.AutoFill destination:=Range("q6:q35"), Type:= _
+        xlFillDefault
+    Range("t6").Select
+    ActiveCell.FormulaR1C1 = _
+        "=IF(OR(RC[-2]="""",RC[-1]=""""),"""",Calculate(RC[-18],RC[-1],RC[-2],R[-1]C,R4C[-2]))"
+    ActiveCell.Select
+    Selection.AutoFill destination:=Range("t6:t35"), Type:= _
+        xlFillDefault
+   
+End Sub
+
+Sub removeExtras(nrPLayers As Integer)
+
+If nrPLayers = 4 Then
+    Range("e30:e35").Clear
+    Range("h30:h35").Clear
+    Range("k30:k35").Clear
+    Range("n30:n35").Clear
+    Range("e6:e29").Borders(xlEdgeLeft).LineStyle = xlContinous
+    Range("e6:e29").Borders(xlEdgeLeft).Weight = xlThick
+    Range("e29").Borders(xlEdgeBottom).LineStyle = xlContinous
+    Range("e29").Borders(xlEdgeBottom).Weight = xlThick
+    Range("h6:h29").Borders(xlEdgeLeft).LineStyle = xlContinous
+    Range("h6:h29").Borders(xlEdgeLeft).Weight = xlThick
+    Range("h29").Borders(xlEdgeBottom).LineStyle = xlContinous
+    Range("h29").Borders(xlEdgeBottom).Weight = xlThick
+    Range("k6:k29").Borders(xlEdgeLeft).LineStyle = xlContinous
+    Range("k6:k29").Borders(xlEdgeLeft).Weight = xlThick
+    Range("k29").Borders(xlEdgeBottom).LineStyle = xlContinous
+    Range("k29").Borders(xlEdgeBottom).Weight = xlThick
+    Range("n6:n29").Borders(xlEdgeLeft).LineStyle = xlContinous
+    Range("n6:n29").Borders(xlEdgeLeft).Weight = xlThick
+    Range("n29").Borders(xlEdgeBottom).LineStyle = xlContinous
+    Range("n29").Borders(xlEdgeBottom).Weight = xlThick
+ElseIf nrPLayers = 5 Then
+    Range("e33:e35").Clear
+    Range("h33:h35").Clear
+    Range("k33:k35").Clear
+    Range("n33:n35").Clear
+    Range("q33:q35").Clear
+    Range("e6:e32").Borders(xlEdgeLeft).LineStyle = xlContinous
+    Range("e6:e32").Borders(xlEdgeLeft).Weight = xlThick
+    Range("e32").Borders(xlEdgeBottom).LineStyle = xlContinous
+    Range("e32").Borders(xlEdgeBottom).Weight = xlThick
+    Range("h6:h32").Borders(xlEdgeLeft).LineStyle = xlContinous
+    Range("h6:h32").Borders(xlEdgeLeft).Weight = xlThick
+    Range("h32").Borders(xlEdgeBottom).LineStyle = xlContinous
+    Range("h32").Borders(xlEdgeBottom).Weight = xlThick
+    Range("k6:k32").Borders(xlEdgeLeft).LineStyle = xlContinous
+    Range("k6:k32").Borders(xlEdgeLeft).Weight = xlThick
+    Range("k32").Borders(xlEdgeBottom).LineStyle = xlContinous
+    Range("k32").Borders(xlEdgeBottom).Weight = xlThick
+    Range("n6:n32").Borders(xlEdgeLeft).LineStyle = xlContinous
+    Range("n6:n32").Borders(xlEdgeLeft).Weight = xlThick
+    Range("n32").Borders(xlEdgeBottom).LineStyle = xlContinous
+    Range("n32").Borders(xlEdgeBottom).Weight = xlThick
+    Range("q6:q32").Borders(xlEdgeLeft).LineStyle = xlContinous
+    Range("q6:q32").Borders(xlEdgeLeft).Weight = xlThick
+    Range("q32").Borders(xlEdgeBottom).LineStyle = xlContinous
+    Range("q32").Borders(xlEdgeBottom).Weight = xlThick
+    
+    
+Else
+    Range("e6:e35").Borders(xlEdgeLeft).LineStyle = xlContinous
+    Range("e6:e35").Borders(xlEdgeLeft).Weight = xlThick
+    Range("h6:h35").Borders(xlEdgeLeft).LineStyle = xlContinous
+    Range("h6:h35").Borders(xlEdgeLeft).Weight = xlThick
+    Range("k6:k35").Borders(xlEdgeLeft).LineStyle = xlContinous
+    Range("k6:k35").Borders(xlEdgeLeft).Weight = xlThick
+    Range("n6:n35").Borders(xlEdgeLeft).LineStyle = xlContinous
+    Range("n6:n35").Borders(xlEdgeLeft).Weight = xlThick
+    Range("q6:q35").Borders(xlEdgeLeft).LineStyle = xlContinous
+    Range("q6:q35").Borders(xlEdgeLeft).Weight = xlThick
+    Range("t6:t35").Borders(xlEdgeLeft).LineStyle = xlContinous
+    Range("t6:t35").Borders(xlEdgeLeft).Weight = xlThick
+    Range("e35").Borders(xlEdgeBottom).LineStyle = xlContinous
+    Range("e35").Borders(xlEdgeBottom).Weight = xlThick
+    Range("h35").Borders(xlEdgeBottom).LineStyle = xlContinous
+    Range("h35").Borders(xlEdgeBottom).Weight = xlThick
+    Range("k35").Borders(xlEdgeBottom).LineStyle = xlContinous
+    Range("k35").Borders(xlEdgeBottom).Weight = xlThick
+    Range("n35").Borders(xlEdgeBottom).LineStyle = xlContinous
+    Range("n35").Borders(xlEdgeBottom).Weight = xlThick
+    Range("q35").Borders(xlEdgeBottom).LineStyle = xlContinous
+    Range("q35").Borders(xlEdgeBottom).Weight = xlThick
+    Range("t35").Borders(xlEdgeBottom).LineStyle = xlContinous
+    Range("t35").Borders(xlEdgeBottom).Weight = xlThick
+    
+
+End If
+End Sub
 
 
 
